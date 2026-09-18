@@ -6,8 +6,8 @@ Begin VB.Form frmPrincipal
    ClientTop       =   465
    ClientWidth     =   4560
    LinkTopic       =   "Form1"
-   ScaleHeight     =   21015
-   ScaleWidth      =   38160
+   ScaleHeight     =   3015
+   ScaleWidth      =   4560
    StartUpPosition =   3  'Windows Default
 End
 Attribute VB_Name = "frmPrincipal"
@@ -16,11 +16,9 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Private Sub Form_Load()
-    If AbrirConexao() Then
-        MsgBox "Conexão com DB_MiniDespesas realizada com sucesso!", vbInformation, "Sucesso"
-    End If
+    Call AbrirConexao
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
-    FecharConexao
+    Call FecharConexao
 End Sub
