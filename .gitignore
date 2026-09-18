@@ -1,0 +1,19 @@
+# Executáveis e compilações do VB6
+*.exe
+*.dll
+*.ocx
+
+# Arquivos de estado e ambiente local do VB6 IDE
+*.vbw
+*.scc
+*.TMP
+*.tmp
+
+# Arquivos de dados binários do SQL Server
+*.mdf
+*.ldf
+
+# Arquivos do sistema operacional
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
