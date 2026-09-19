@@ -2,6 +2,10 @@
 
 Aplicação desktop em **Visual Basic 6 e SQL Server** para cadastrar, consultar, editar e excluir despesas, com totalização dos valores registrados.
 
+## 🖥️ Tela do sistema
+
+![Tela do Mini Gestor de Despesas com cadastro, filtro mensal e total do período](docs/imagens/MiniGestorDespesas.png)
+
 ## 🎯 O que o sistema resolve
 
 Centraliza descrição, data e valor de cada gasto em uma lista. Permite corrigir lançamentos sem excluir e cadastrar novamente, consultar o total e remover um registro após confirmação.
