@@ -15,15 +15,15 @@ Begin VB.Form frmPrincipal
    End
    Begin VB.Label lblTitulo
       Left = 360
-      Top = 200
+      Top = 120
       Width = 10000
-      Height = 480
+      Height = 660
       TabIndex = 1
       Caption = "MINI GESTOR | Despesas"
    End
    Begin VB.Label lblSubtitulo
       Left = 360
-      Top = 720
+      Top = 840
       Width = 10000
       Height = 300
       TabIndex = 2
