@@ -11,7 +11,7 @@ Centraliza descrição, data e valor de cada gasto em uma lista. Permite corrigi
 - Cadastro com descrição, data e valor positivo, limitado a duas casas decimais.
 - Edição do registro selecionado e cancelamento da edição.
 - Exclusão definitiva com confirmação, mostrando descrição e valor.
-- Total geral de **todas as despesas da lista**, sem filtro por mês.
+- Filtro de mês e ano, iniciado no mês atual, com total apenas das despesas do período. Meses sem lançamentos mostram total zero, sem apagar o histórico.
 - Interface em azul-escuro e verde, fonte Segoe UI e tabela redimensionável.
 - Duplo clique para editar; **F2** limpa os campos/cancela a edição; **F5** atualiza a lista.
 
@@ -21,7 +21,7 @@ O formulário chama stored procedures por `ADODB.Command`, com parâmetros tipad
 
 Edição e exclusão comparam os valores originais com os do banco. Se outro processo modificar ou remover o registro, a operação é recusada e o usuário deve atualizar a lista. Essa comparação não substitui um histórico de auditoria ou controle por `rowversion`.
 
-As quatro procedures novas possuem prefixo `usp_Despesas`. O script de evolução mantém a tabela, seus dados e as procedures anteriores. A tela atual utiliza as novas procedures e lista todos os períodos.
+As quatro procedures novas possuem prefixo `usp_Despesas`. O script de evolução mantém a tabela, seus dados e as procedures anteriores. A tela atual utiliza as novas procedures e permite consultar cada mês separadamente.
 
 ## 📂 Organização
 
@@ -31,6 +31,7 @@ database/01_create_database.sql
 database/02_create_table.sql
 database/03_stored_procedures.sql
 database/04_modernizacao_crud.sql
+database/05_filtro_mensal.sql
 assets/mini-despesas.ico      Ícone do atalho
 bin/MiniDespesas.exe          Compilação local, fora do Git
 ```
@@ -38,7 +39,7 @@ bin/MiniDespesas.exe          Compilação local, fora do Git
 ## 🚀 Instalação e execução
 
 1. Disponibilize a instância SQL Server `.\SQLEXPRESS` com autenticação Windows.
-2. Para uma instalação nova, execute os scripts SQL na ordem **01, 02, 03, 04**. Em uma instalação existente, aplique somente **04** para esta atualização.
+2. Para uma instalação nova, execute os scripts SQL na ordem **01, 02, 03, 04, 05**. Em uma instalação já modernizada (script 04 aplicado), aplique somente **05** para adicionar o filtro mensal.
 3. Garanta que a conta Windows usada pelo aplicativo tenha acesso ao banco `DB_MiniDespesas` e às operações necessárias.
 4. Compile `src/MiniDespesas.vbp` com VB6 para `bin/MiniDespesas.exe`, ou utilize um executável já compilado.
 5. Abra o executável ou o atalho **Mini Gestor de Despesas**, na raiz da instalação local.
@@ -60,3 +61,9 @@ O ícone original está em `assets/mini-despesas.ico`. O atalho local aponta par
 - Fontes VB6 estão em Windows-1252. Scripts SQL e documentação estão em UTF-8.
 
 O repositório contém os fontes e scripts de estrutura, sem executáveis ou dados pessoais.
+
+## 📅 Consulta mensal
+
+Ao abrir, a tela seleciona o mês e ano atuais. Escolha outro mês, digite o ano e clique em **Filtrar mês**. O total corresponde à lista carregada; F5 atualiza o período aplicado. A troca de período fica bloqueada durante a edição: salve ou cancele primeiro. Se salvar uma despesa em outro mês, um aviso informa onde consultá-la.
+
+Não há exclusão ou fechamento automático na virada do mês. Com a janela aberta, o período permanece selecionado; ao reabrir, o mês atual é selecionado novamente.

@@ -111,9 +111,34 @@ Begin VB.Form frmPrincipal
       TabIndex = 12
       Caption = "Despesas registradas"
    End
+   Begin VB.ComboBox cboMes
+      Left = 5040
+      Top = 2220
+      Width = 2400
+      Height = 420
+      TabIndex = 20
+      Style = 2
+   End
+   Begin VB.TextBox txtAno
+      Left = 7620
+      Top = 2220
+      Width = 1200
+      Height = 420
+      TabIndex = 20
+      MaxLength = 4
+      ToolTipText = "Ano com quatro dígitos"
+   End
+   Begin VB.CommandButton btnFiltrar
+      Left = 9060
+      Top = 2220
+      Width = 2400
+      Height = 420
+      TabIndex = 20
+      Caption = "&Filtrar mês"
+   End
    Begin MSFlexGridLib.MSFlexGrid gridDespesas
       Left = 5040
-      Top = 2280
+      Top = 2880
       Width = 10200
       Height = 4200
       TabIndex = 13
@@ -183,9 +208,19 @@ Private descricaoOriginal As String
 Private valorOriginal As Currency
 Private dataOriginal As Date
 Private carregando As Boolean
+Private inicioPeriodo As Date
 
 Private Sub Form_Load()
     AplicarVisual
+    Dim meses As Variant
+    Dim indice As Integer
+    meses = Split("Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro", "|")
+    For indice = 0 To 11
+        cboMes.AddItem meses(indice)
+    Next
+    cboMes.ListIndex = Month(Date) - 1
+    txtAno.Text = CStr(Year(Date))
+    inicioPeriodo = DateSerial(Year(Date), Month(Date), 1)
     If Not AbrirConexao() Then
         Unload Me
         Exit Sub
@@ -228,11 +263,14 @@ Private Sub AplicarVisual()
     txtData.TabIndex = 2
     btnSalvar.TabIndex = 3
     btnLimpar.TabIndex = 4
-    gridDespesas.TabIndex = 5
-    btnEditar.TabIndex = 6
-    btnExcluir.TabIndex = 7
-    btnAtualizar.TabIndex = 8
-    btnSair.TabIndex = 9
+    cboMes.TabIndex = 5
+    txtAno.TabIndex = 6
+    btnFiltrar.TabIndex = 7
+    gridDespesas.TabIndex = 8
+    btnEditar.TabIndex = 9
+    btnExcluir.TabIndex = 10
+    btnAtualizar.TabIndex = 11
+    btnSair.TabIndex = 12
     With gridDespesas
         .BackColor = vbWhite
         .BackColorBkg = vbWhite
@@ -306,13 +344,15 @@ Private Sub CarregarDespesas()
     carregando = True
     btnEditar.Enabled = False
     btnExcluir.Enabled = False
-    Set comando = NovoComando("dbo.usp_DespesasListar")
-    Set registros = comando.Execute
+    Set comando = NovoComando("dbo.usp_DespesasListarPeriodo")
+    comando.Parameters.Append comando.CreateParameter("@Inicio", adDBDate, adParamInput, , inicioPeriodo)
+    comando.Parameters.Append comando.CreateParameter("@Fim", adDBDate, adParamInput, , DateAdd("m", 1, inicioPeriodo))
     gridDespesas.Redraw = False
     gridDespesas.Rows = 2
     gridDespesas.Row = 1
     gridDespesas.Clear
     gridDespesas.FormatString = "ID|Data|Descrição|Valor (R$)"
+    Set registros = comando.Execute
     total = CDec(0)
     Do While Not registros.EOF
         quantidade = quantidade + 1
@@ -327,14 +367,17 @@ Private Sub CarregarDespesas()
     registros.Close
     gridDespesas.Redraw = True
     carregando = False
-    lblTotal.Caption = "Total das despesas: " & FormatCurrency(total, 2)
+    lblTotal.Caption = "Total de " & Format$(inicioPeriodo, "mm/yyyy") & ": " & FormatCurrency(total, 2)
     lblStatus.Caption = CStr(quantidade) & " despesa(s) | F2: nova | F5: atualizar | Duplo clique: editar"
+    lblLista.Caption = "Despesas de " & Format$(inicioPeriodo, "mm/yyyy")
     AtualizarSelecao
     Exit Sub
 Falha:
     gridDespesas.Redraw = True
     carregando = False
     lblTotal.Caption = "Total indisponível"
+    lblLista.Caption = "Não foi possível carregar o período"
+    lblStatus.Caption = "Atualize para tentar novamente."
     MsgBox "Não foi possível atualizar a lista: " & Err.Description, vbExclamation
 End Sub
 
@@ -373,6 +416,9 @@ Private Sub btnEditar_Click()
     txtDescricao.Text = descricaoOriginal
     txtValor.Text = Format$(valorOriginal, "0.00")
     txtData.Text = Format$(dataOriginal, "dd/mm/yyyy")
+    cboMes.Enabled = False
+    txtAno.Enabled = False
+    btnFiltrar.Enabled = False
     lblEditor.Caption = "Editar despesa #" & CStr(idEdicao)
     btnSalvar.Caption = "&Salvar alterações"
     btnLimpar.Caption = "&Cancelar edição"
@@ -383,6 +429,9 @@ End Sub
 
 Private Sub LimparEdicao()
     idEdicao = 0
+    cboMes.Enabled = True
+    txtAno.Enabled = True
+    btnFiltrar.Enabled = True
     txtDescricao.Text = ""
     txtValor.Text = ""
     txtData.Text = Format$(Date, "dd/mm/yyyy")
@@ -429,6 +478,9 @@ Private Sub btnSalvar_Click()
     CarregarDespesas
     btnSalvar.Enabled = True
     txtDescricao.SetFocus
+    If Month(dataDespesa) <> Month(inicioPeriodo) Or Year(dataDespesa) <> Year(inicioPeriodo) Then
+        MsgBox "Despesa salva em " & Format$(dataDespesa, "mm/yyyy") & ". Selecione esse período para consultá-la.", vbInformation
+    End If
     Exit Sub
 ValorInvalido:
     MsgBox "Informe um valor positivo, até 99.999.999,99, com no máximo duas casas decimais. Use o separador decimal do Windows.", vbExclamation
@@ -489,4 +541,21 @@ End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
     FecharConexao
+End Sub
+
+Private Sub btnFiltrar_Click()
+    If idEdicao <> 0 Then Exit Sub
+    If Not Trim$(txtAno.Text) Like "####" Then
+        MsgBox "Informe o ano com quatro dígitos (0100 a 9998).", vbExclamation
+        txtAno.SetFocus
+        Exit Sub
+    End If
+    Dim ano As Long
+    ano = CLng(txtAno.Text)
+    If ano < 100 Or ano > 9998 Or cboMes.ListIndex < 0 Then
+        MsgBox "Selecione o mês e informe um ano entre 0100 e 9998.", vbExclamation
+        Exit Sub
+    End If
+    inicioPeriodo = DateSerial(ano, cboMes.ListIndex + 1, 1)
+    CarregarDespesas
 End Sub
